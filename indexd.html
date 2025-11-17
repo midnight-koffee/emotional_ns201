@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Emotional Interference Task</title>
+    <script src="jspsych/dist/jspsych.js"></script>
+    <script src="jspsych/dist/plugin-html-keyboard-response.js"></script>
+    <script src="jspsych/dist/plugin-preload.js"></script>
+    <script src="jspsych/dist/plugin-instructions.js"></script>
+    <link href="jspsych/dist/jspsych.css" rel="stylesheet" type="text/css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #2c2c2c;
+            overflow: hidden;
+        }
+        .trial-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-color: #2c2c2c;
+        }
+        .center-image {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70vw;
+            height: 70vh;
+            object-fit: cover;
+            border: 2px solid #555;
+            box-shadow: 0 0 30px rgba(0,0,0,0.7);
+        }
+        .arrow {
+            position: absolute;
+            font-size: 42px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
+            z-index: 100;
+            opacity: 0.9;
+        }
+        .fixation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            color: white;
+            text-shadow: 2px 2px 4px black;
+            z-index: 200;
+        }
+        #download-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        #download-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #download-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="download-container" style="display: none;">
+        <button id="download-btn">Download Data as CSV</button>
+    </div>
+</body>
+<script>
+
+// Initialize jsPsych
+const jsPsych = initJsPsych({
+    on_finish: function() {
+        // Show download button
+        document.getElementById('download-container').style.display = 'block';
+        
+        // Set up download functionality
+        document.getElementById('download-btn').onclick = function() {
+            const data = jsPsych.data.get().csv();
+            const blob = new Blob([data], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'emotion_experiment_data.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+    }
+});
+
+// Define image arrays
+const high_neg_images = [
+    'Injury 4.jpg', 'Explosion 5.jpg', 'Fire 11.jpg', 'Fire 5.jpg',
+    'Dummy 1.jpg', 'Fire 9.jpg', 'Miserable pose 3.jpg', 'War 8.jpg'
+];
+
+const high_pos_images = [
+    'Nude couple 5.jpg', 'Dog 6.jpg', 'Fireworks 2.jpg', 'Rainbow 2.jpg',
+    'Dog 18.jpg', 'Cat 5.jpg', 'Fireworks 6.jpg', 'Beach 1.jpg'
+];
+
+const neutral_images = [
+    'Wall 2.jpg', 'Wall 1.jpg', 'Wall 3.jpg', 'Bricks 1.jpg',
+    'Cotton swabs 3.jpg', 'Paper 3.jpg', 'Paperclips 3.jpg', 'Office supplies 2.jpg'
+];
+
+// Preload all images
+let all_images = [];
+high_neg_images.forEach(img => all_images.push('images/high_neg/' + img));
+high_pos_images.forEach(img => all_images.push('images/high_pos/' + img));
+neutral_images.forEach(img => all_images.push('images/neutral/' + img));
+
+const preload = {
+    type: jsPsychPreload,
+    images: all_images
+};
+
+// Instructions
+const instructions = {
+    type: jsPsychInstructions,
+    pages: [
+        '<div style="color: white; text-align: center; max-width: 800px; margin: 0 auto;">' +
+        '<h2>Attention Capture Experiment</h2>' +
+        '<p>In this experiment, you will see images in the center of the screen.</p>' +
+        '<p>Somewhere around the image, a <strong>white arrow</strong> will appear (← → ↑ ↓).</p>' +
+        '</div>',
+        
+        '<div style="color: white; text-align: center; max-width: 800px; margin: 0 auto;">' +
+        '<p>Your task is to find the arrow and press the corresponding <strong>arrow key</strong> as quickly as possible.</p>' +
+        '<p>Ignore the central image - focus only on finding the arrow.</p>' +
+        '</div>',
+        
+        '<div style="color: white; text-align: center; max-width: 800px; margin: 0 auto;">' +
+        '<p>The images might be distracting, but try to focus on the arrow task.</p>' +
+        '<p>There will be 120 trials.</p>' +
+        '<p>Press the right arrow to begin.</p>' +
+        '</div>'
+    ],
+    show_clickable_nav: true,
+    key_forward: 'ArrowRight'
+};
+
+// Arrow definitions
+const arrows = [
+    { symbol: '←', key: 'ArrowLeft' },
+    { symbol: '→', key: 'ArrowRight' },
+    { symbol: '↑', key: 'ArrowUp' },
+    { symbol: '↓', key: 'ArrowDown' }
+];
+
+// NEW: Arrow positions - NEAR the image but NOT on it
+const arrow_positions = [
+    // Top positions (just above image)
+    { top: 'calc(50% - 36vh)', left: '50%', transform: 'translateX(-50%)' },  // top center
+    { top: 'calc(50% - 36vh)', left: 'calc(50% - 36vw)' },  // top left
+    { top: 'calc(50% - 36vh)', left: 'calc(50% + 36vw)' },  // top right
+    
+    // Bottom positions (just below image)  
+    { top: 'calc(50% + 36vh)', left: '50%', transform: 'translateX(-50%)' }, // bottom center
+    { top: 'calc(50% + 36vh)', left: 'calc(50% - 36vw)' }, // bottom left
+    { top: 'calc(50% + 36vh)', left: 'calc(50% + 36vw)' }, // bottom right
+    
+    // Side positions (just beside image)
+    { top: '50%', left: 'calc(50% - 36vw)', transform: 'translateY(-50%)' },  // left middle
+    { top: '50%', left: 'calc(50% + 36vw)', transform: 'translateY(-50%)' }   // right middle
+];
+
+// Function to create a trial
+function createTrial(center_image, image_category) {
+    // Randomly select arrow and position
+    const arrow = jsPsych.randomization.sampleWithoutReplacement(arrows, 1)[0];
+    const position = jsPsych.randomization.sampleWithoutReplacement(arrow_positions, 1)[0];
+    
+    const stimulus = `
+        <div class="trial-container">
+            <img class="center-image" src="${center_image}" alt="center image">
+            <div class="arrow" style="
+                top: ${position.top}; 
+                left: ${position.left};
+                ${position.transform ? `transform: ${position.transform};` : ''}
+            ">${arrow.symbol}</div>
+        </div>
+    `;
+    
+    return {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: stimulus,
+        choices: [arrow.key], // Only accept correct arrow key
+        trial_duration: 3000,
+        response_ends_trial: true,
+        data: {
+            center_image: center_image,
+            image_category: image_category,
+            arrow_direction: arrow.symbol,
+            correct_key: arrow.key,
+            arrow_position: JSON.stringify(position)
+        },
+        on_finish: function(data) {
+            data.correct = (data.response === data.correct_key) ? 1 : 0;
+            data.rt = data.rt;
+            
+            // Mark invalid trials (too fast/slow or incorrect)
+            if (!data.correct || data.rt < 100 || data.rt > 2900) {
+                data.valid_trial = 0;
+            } else {
+                data.valid_trial = 1;
+            }
+        }
+    };
+}
+
+// Fixation cross (before each trial)
+function createFixation() {
+    return {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: '<div class="trial-container"><div class="fixation">+</div></div>',
+        choices: "NO_KEYS",
+        trial_duration: 800
+    };
+}
+
+// Create trials array
+let trials = [];
+
+// Create 120 trials: 40 neutral, 40 high_neg, 40 high_pos
+for (let i = 0; i < 5; i++) { // 5 repetitions of each image set
+    // Neutral trials (40 total)
+    neutral_images.forEach(img => {
+        trials.push(createTrial('images/neutral/' + img, 'neutral'));
+    });
+    
+    // High-arousal negative trials (40 total)
+    high_neg_images.forEach(img => {
+        trials.push(createTrial('images/high_neg/' + img, 'high_arousal_negative'));
+    });
+    
+    // High-arousal positive trials (40 total)
+    high_pos_images.forEach(img => {
+        trials.push(createTrial('images/high_pos/' + img, 'high_arousal_positive'));
+    });
+}
+
+// Shuffle all trials
+trials = jsPsych.randomization.shuffle(trials);
+
+// Build timeline: Fixation -> Trial -> Fixation -> Trial...
+let timeline = [];
+trials.forEach(trial => {
+    timeline.push(createFixation());
+    timeline.push(trial);
+});
+
+// Build complete timeline
+const full_timeline = [preload, instructions, ...timeline];
+
+// Run experiment
+jsPsych.run(full_timeline);
+
+</script>
+</html>

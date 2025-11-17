@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Emotional Processing & Visual Attention</title>
+    <script src="jspsych/dist/jspsych.js"></script>
+    <script src="jspsych/dist/plugin-html-keyboard-response.js"></script>
+    <script src="jspsych/dist/plugin-preload.js"></script>
+    <script src="jspsych/dist/plugin-instructions.js"></script>
+    <link href="jspsych/dist/jspsych.css" rel="stylesheet" type="text/css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .trial-screen {
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .center-image-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 
+                0 20px 60px rgba(0,0,0,0.3),
+                0 0 0 1px rgba(255,255,255,0.1);
+        }
+        
+        .center-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .arrow-subtle {
+            position: absolute;
+            font-size: 36px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.5);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+        
+        .fixation-modern {
+            font-size: 60px;
+            color: white;
+            font-weight: 300;
+            text-shadow: 0 2px 20px rgba(255,255,255,0.5);
+        }
+        
+        .instruction-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 50px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        
+        .instruction-container h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .instruction-container p {
+            font-size: 18px;
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .instruction-container strong {
+            color: #764ba2;
+            font-weight: 600;
+        }
+        
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .trial-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .results-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+        }
+
+        .results-card {
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .results-header h2 {
+            color: #667eea;
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .results-header p {
+            color: #666;
+            font-size: 18px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-unit {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .interpretation {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .interpretation h3 {
+            color: #667eea;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .interpretation p {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .download-section {
+            text-align: center;
+        }
+
+        .btn-download {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .data-preview {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 11px;
+            margin-top: 20px;
+            resize: none;
+        }
+    </style>
+</head>
+<body></body>
+<script>
+
+let currentTrialNum = 0;
+let totalTrials = 120;
+let allResults = [];
+
+const jsPsych = initJsPsych({
+    on_finish: function() {
+        showResults();
+    }
+});
+
+function showResults() {
+    const validTrials = allResults.filter(t => t.correct === 1);
+    
+    const neutralRTs = validTrials
+        .filter(t => t.image_category === 'neutral')
+        .map(t => t.rt);
+    const negativeRTs = validTrials
+        .filter(t => t.image_category === 'high_arousal_negative')
+        .map(t => t.rt);
+    const positiveRTs = validTrials
+        .filter(t => t.image_category === 'high_arousal_positive')
+        .map(t => t.rt);
+    
+    const meanNeutral = neutralRTs.reduce((a,b) => a+b, 0) / neutralRTs.length;
+    const meanNegative = negativeRTs.reduce((a,b) => a+b, 0) / negativeRTs.length;
+    const meanPositive = positiveRTs.reduce((a,b) => a+b, 0) / positiveRTs.length;
+    
+    const accuracy = (validTrials.length / allResults.length * 100).toFixed(1);
+    
+    const negDiff = meanNegative - meanNeutral;
+    const posDiff = meanPositive - meanNeutral;
+    
+    let interpretation = '';
+    if (negDiff > 100 && posDiff > 100) {
+        interpretation = `
+            <p><strong>Fascinating!</strong> Your brain took significantly longer to find arrows when emotional images were present.</p>
+            <p>🧠 <strong>What this means:</strong> Emotional content (both disturbing and pleasant images) automatically captured your attention, interfering with the simple arrow detection task. This demonstrates that emotional processing happens <em>automatically</em> - even when you're trying to ignore the images!</p>
+            <p>📊 Negative images slowed you down by <strong>${negDiff.toFixed(0)}ms</strong>, and positive images by <strong>${posDiff.toFixed(0)}ms</strong>. This is evidence of the "emotional processing advantage" - our brains prioritize emotionally salient information.</p>
+        `;
+    } else if (Math.abs(negDiff) < 50 && Math.abs(posDiff) < 50) {
+        interpretation = `
+            <p><strong>Interesting!</strong> Your reaction times were remarkably consistent across all image types.</p>
+            <p>🧠 <strong>What this means:</strong> You were able to maintain strong focus on the arrow detection task, successfully filtering out the emotional content of the images. This suggests excellent attentional control!</p>
+        `;
+    } else {
+        interpretation = `
+            <p><strong>Notable pattern!</strong> Emotional images affected your arrow detection speed differently.</p>
+            <p>🧠 The variation in your response times across image types shows how different emotional content can influence attention and cognitive processing.</p>
+        `;
+    }
+    
+    document.body.innerHTML = `
+        <div class="results-container">
+            <div class="results-card">
+                <div class="results-header">
+                    <h2>🎉 Experiment Complete!</h2>
+                    <p>Thank you for participating. Here are your results:</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Neutral Images</div>
+                        <div class="stat-value">${meanNeutral.toFixed(0)}</div>
+                        <div class="stat-unit">milliseconds</div>
+                    </div>
+                    
+                    <div class="stat-card ${negDiff > 100 ? 'highlight' : ''}">
+                        <div class="stat-label">Negative Images</div>
+                        <div class="stat-value">${meanNegative.toFixed(0)}</div>
+                        <div class="stat-unit">ms ${negDiff > 0 ? '(+' + negDiff.toFixed(0) + ')' : ''}</div>
+                    </div>
+                    
+                    <div class="stat-card ${posDiff > 100 ? 'highlight' : ''}">
+                        <div class="stat-label">Positive Images</div>
+                        <div class="stat-value">${meanPositive.toFixed(0)}</div>
+                        <div class="stat-unit">ms ${posDiff > 0 ? '(+' + posDiff.toFixed(0) + ')' : ''}</div>
+                    </div>
+                </div>
+
+                <div class="interpretation">
+                    <h3>📊 Your Performance Analysis</h3>
+                    ${interpretation}
+                    <p style="margin-top: 15px;"><strong>Overall Accuracy:</strong> ${accuracy}% correct responses</p>
+                </div>
+
+                <div class="download-section">
+                    <p style="color: #666; margin-bottom: 15px;">Your data has been recorded. Please download it below:</p>
+                    <button class="btn-download" onclick="downloadData()">📥 Download Data (CSV)</button>
+                    <textarea class="data-preview" readonly>${jsPsych.data.get().csv()}</textarea>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function downloadData() {
+    const csv = jsPsych.data.get().csv();
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `emotion_experiment_${Date.now()}.csv`;
+    a.click();
+}
+
+const high_neg_images = [
+    'Injury 4.jpg', 'Explosion 5.jpg', 'Fire 11.jpg', 'Fire 5.jpg',
+    'Dummy 1.jpg', 'Fire 9.jpg', 'Miserable pose 3.jpg', 'War 8.jpg'
+];
+
+const high_pos_images = [
+    'Nude couple 5.jpg', 'Dog 6.jpg', 'Fireworks 2.jpg', 'Rainbow 2.jpg',
+    'Dog 18.jpg', 'Cat 5.jpg', 'Fireworks 6.jpg', 'Beach 1.jpg'
+];
+
+const neutral_images = [
+    'Wall 2.jpg', 'Wall 1.jpg', 'Wall 3.jpg', 'Bricks 1.jpg',
+    'Cotton swabs 3.jpg', 'Paper 3.jpg', 'Paperclips 3.jpg', 'Office supplies 2.jpg'
+];
+
+let all_images = [];
+high_neg_images.forEach(img => all_images.push('images/high_neg/' + img));
+high_pos_images.forEach(img => all_images.push('images/high_pos/' + img));
+neutral_images.forEach(img => all_images.push('images/neutral/' + img));
+
+const preload = {
+    type: jsPsychPreload,
+    images: all_images
+};
+
+const instructions = {
+    type: jsPsychInstructions,
+    pages: [
+        `<div class="instruction-container">
+            <h2>Welcome to the Study</h2>
+            <p>In this experiment, you'll see images appear at the center of the screen.</p>
+            <p>A <strong>small arrow</strong> will appear on either the left or right side of the screen.</p>
+        </div>`,
+        `<div class="instruction-container">
+            <h2>Your Task</h2>
+            <p><strong>Find the arrow</strong> and press the matching arrow key as quickly as possible:</p>
+            <p>• Press <strong>←</strong> for left arrow</p>
+            <p>• Press <strong>→</strong> for right arrow</p>
+            <p>• Press <strong>↑</strong> for up arrow</p>
+            <p>• Press <strong>↓</strong> for down arrow</p>
+        </div>`,
+        `<div class="instruction-container">
+            <h2>Important Tips</h2>
+            <p>• Try to <strong>focus on the center (+) fixation</strong> before each trial</p>
+            <p>• Respond as <strong>quickly and accurately</strong> as possible</p>
+            <p>• There will be <strong>120 trials</strong> (about 8-10 minutes)</p>
+            <p>• Take a brief rest after each response</p>
+            <p style="margin-top: 30px; color: #667eea; font-weight: 600;">Press "Next" when ready to begin!</p>
+        </div>`
+    ],
+    show_clickable_nav: true
+};
+
+const arrows = ['←', '→', '↑', '↓'];
+
+function getArrowFromKey(key) {
+    const map = {
+        'arrowleft': '←', 'arrowright': '→',
+        'arrowup': '↑', 'arrowdown': '↓'
+    };
+    return map[key.toLowerCase()] || null;
+}
+
+const arrow_positions = [
+    {left: '8%', top: '15%', name: 'left-top'},
+    {left: '8%', top: '25%', name: 'left-upper'},
+    {left: '8%', top: '35%', name: 'left-upper-mid'},
+    {left: '8%', top: '45%', name: 'left-mid'},
+    {left: '8%', top: '55%', name: 'left-mid-lower'},
+    {left: '8%', top: '65%', name: 'left-lower'},
+    {left: '8%', top: '75%', name: 'left-bottom-upper'},
+    {left: '8%', top: '85%', name: 'left-bottom'},
+    {left: '92%', top: '15%', name: 'right-top'},
+    {left: '92%', top: '25%', name: 'right-upper'},
+    {left: '92%', top: '35%', name: 'right-upper-mid'},
+    {left: '92%', top: '45%', name: 'right-mid'},
+    {left: '92%', top: '55%', name: 'right-mid-lower'},
+    {left: '92%', top: '65%', name: 'right-lower'},
+    {left: '92%', top: '75%', name: 'right-bottom-upper'},
+    {left: '92%', top: '85%', name: 'right-bottom'}
+];
+
+function createTrial(image_path, image_category) {
+    const arrow = arrows[Math.floor(Math.random() * arrows.length)];
+    const arrow_pos = arrow_positions[Math.floor(Math.random() * arrow_positions.length)];
+    
+    currentTrialNum++;
+    const progress = (currentTrialNum / totalTrials) * 100;
+    
+    const stimulus = `
+        <div class="progress-bar" style="width: ${progress}%;"></div>
+        <div class="trial-counter">Trial ${currentTrialNum} / ${totalTrials}</div>
+        <div class="trial-screen">
+            <div class="center-image-container">
+                <img src="${image_path}" class="center-image">
+            </div>
+            <div class="arrow-subtle" style="left: ${arrow_pos.left}; top: ${arrow_pos.top}; transform: translate(-50%, -50%);">
+                ${arrow}
+            </div>
+        </div>
+    `;
+    
+    return {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: stimulus,
+        choices: ['arrowleft', 'arrowright', 'arrowup', 'arrowdown'],
+        data: {
+            image: image_path,
+            image_category: image_category,
+            arrow: arrow,
+            arrow_position: arrow_pos.name
+        },
+        on_finish: function(data) {
+            const responseArrow = getArrowFromKey(data.response);
+            data.response_arrow = responseArrow;
+            data.correct = (responseArrow === data.arrow) ? 1 : 0;
+            allResults.push(data);
+        }
+    };
+}
+
+function createFixation() {
+    return {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `
+            <div class="trial-screen">
+                <div class="fixation-modern">+</div>
+            </div>
+        `,
+        choices: "NO_KEYS",
+        trial_duration: 800
+    };
+}
+
+let trials = [];
+
+// ✅ FIXED: All three conditions get 5 repetitions now!
+for (let rep = 0; rep < 5; rep++) {
+    neutral_images.forEach(img => {
+        trials.push(createTrial('images/neutral/' + img, 'neutral'));
+    });
+}
+
+for (let rep = 0; rep < 5; rep++) {
+    high_neg_images.forEach(img => {
+        trials.push(createTrial('images/high_neg/' + img, 'high_arousal_negative'));
+    });
+}
+
+for (let rep = 0; rep < 5; rep++) {
+    high_pos_images.forEach(img => {
+        trials.push(createTrial('images/high_pos/' + img, 'high_arousal_positive'));
+    });
+}
+
+trials = jsPsych.randomization.shuffle(trials);
+totalTrials = trials.length;
+
+console.log(`✅ Experiment initialized with ${totalTrials} trials`);
+console.log(`   Breakdown: ${neutral_images.length * 5} neutral, ${high_neg_images.length * 5} negative, ${high_pos_images.length * 5} positive`);
+
+let timeline = [];
+timeline.push(createFixation());
+
+trials.forEach(trial => {
+    timeline.push(trial);
+    timeline.push(createFixation());
+});
+
+const full_timeline = [preload, instructions, ...timeline];
+
+jsPsych.run(full_timeline);
+
+</script>
+</html>
